@@ -2,18 +2,17 @@
   "name": "react-native-cockpit",
   "version": "0.1.0",
   "description": "In-app developer heads-up debugger for React Native: inspect Network, Logs, Storage & App State directly on device",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "react-native": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
   "source": "src/index.ts",
   "files": [
     "src",
-    "dist",
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build"
+    "build": "tsc"
   },
   "keywords": [
     "react-native",
