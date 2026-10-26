@@ -4,6 +4,7 @@ import { safeJsonParse } from '../utils/formatters';
 let isInterceptorEnabled = false;
 let originalFetch: typeof global.fetch | null = null;
 let originalXMLHttpRequest: typeof global.XMLHttpRequest | null = null;
+let isCallingFetchSync = false;
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -54,7 +55,11 @@ export class NetworkInterceptor {
         url = input.url;
       }
 
-      const method = (init?.method || (typeof input === 'object' && 'method' in input ? (input as any).method : 'GET') || 'GET').toUpperCase();
+      const method = (
+        init?.method ||
+        (typeof input === 'object' && 'method' in input ? (input as any).method : 'GET') ||
+        'GET'
+      ).toUpperCase();
 
       // Extract request headers
       const requestHeaders: Record<string, string> = {};
@@ -88,8 +93,15 @@ export class NetworkInterceptor {
         startTime,
       });
 
+      let response: Response;
       try {
-        const response = await originalFetch!(input, init);
+        isCallingFetchSync = true;
+        try {
+          response = await originalFetch!(input, init);
+        } finally {
+          isCallingFetchSync = false;
+        }
+
         const endTime = Date.now();
         const duration = endTime - startTime;
 
@@ -108,7 +120,7 @@ export class NetworkInterceptor {
         responseClone
           .text()
           .then((text) => {
-            const size = new Blob ? new Blob([text]).size : text.length;
+            const size = typeof Blob !== 'undefined' ? new Blob([text]).size : text.length;
             const { isJson, value } = safeJsonParse(text);
 
             cockpitStore.updateRequest(id, {
@@ -151,9 +163,12 @@ export class NetworkInterceptor {
 
     const OriginalXHR = originalXMLHttpRequest;
 
-    // Subclass / Wrap XMLHttpRequest
     function CockpitXHR() {
       const xhr = new OriginalXHR();
+      // If instantiated synchronously while inside fetch(), mark it to avoid duplicate capture
+      const isFromFetch = isCallingFetchSync;
+      (xhr as any).__cockpitFromFetch = isFromFetch;
+
       const id = generateId();
       let method = 'GET';
       let url = '';
@@ -181,6 +196,11 @@ export class NetworkInterceptor {
 
       const origSend = xhr.send;
       xhr.send = function (body?: any) {
+        // If this XHR was initiated by fetch(), skip tracking to prevent duplicate rows
+        if ((xhr as any).__cockpitFromFetch) {
+          return origSend.call(xhr, body);
+        }
+
         startTime = Date.now();
         let parsedBody = body;
         if (typeof body === 'string') {
@@ -263,7 +283,6 @@ export class NetworkInterceptor {
     }
 
     CockpitXHR.prototype = OriginalXHR.prototype;
-    // Copy static properties
     for (const key of Object.keys(OriginalXHR)) {
       try {
         (CockpitXHR as any)[key] = (OriginalXHR as any)[key];

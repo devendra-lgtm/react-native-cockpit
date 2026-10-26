@@ -29,30 +29,63 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
 
-  const handleCopyCurl = () => {
-    const curl = generateCurl(request);
+  // Parse URL query parameters
+  let queryParams: Record<string, string> = {};
+  let pathname = request.url;
+  try {
+    const urlObj = new URL(request.url);
+    pathname = urlObj.pathname;
+    urlObj.searchParams.forEach((val, key) => {
+      queryParams[key] = val;
+    });
+  } catch {
+    // If URL parsing fails, extract simple ?query=...
+    const qIndex = request.url.indexOf('?');
+    if (qIndex !== -1) {
+      pathname = request.url.slice(0, qIndex);
+      const search = request.url.slice(qIndex + 1);
+      search.split('&').forEach((pair) => {
+        const [k, v] = pair.split('=');
+        if (k) queryParams[decodeURIComponent(k)] = decodeURIComponent(v || '');
+      });
+    }
+  }
+
+  const queryParamCount = Object.keys(queryParams).length;
+  const requestHeaderCount = request.requestHeaders ? Object.keys(request.requestHeaders).length : 0;
+  const responseHeaderCount = request.responseHeaders ? Object.keys(request.responseHeaders).length : 0;
+
+  const copyToClipboard = (text: string, label: string) => {
     if (onCopyText) {
-      onCopyText(curl);
-      Alert.alert('Copied', 'cURL command copied to clipboard');
+      onCopyText(text);
+      Alert.alert('Copied', `${label} copied to clipboard`);
     } else {
-      Alert.alert('cURL', curl);
+      Alert.alert(label, text);
     }
   };
 
-  const handleCopyResponse = () => {
+  const handleCopyCurl = () => {
+    const curl = generateCurl(request);
+    copyToClipboard(curl, 'cURL command');
+  };
+
+  const handleCopyRequestBody = () => {
+    const text = typeof request.requestBody === 'string'
+      ? request.requestBody
+      : safeJsonStringify(request.requestBody);
+    copyToClipboard(text, 'Request Body');
+  };
+
+  const handleCopyResponseBody = () => {
     const text = typeof request.responseBody === 'string'
       ? request.responseBody
       : safeJsonStringify(request.responseBody);
-    if (onCopyText) {
-      onCopyText(text);
-      Alert.alert('Copied', 'Response copied to clipboard');
-    } else {
-      Alert.alert('Response', text);
-    }
+    copyToClipboard(text, 'Response Body');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Header bar */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
@@ -81,9 +114,16 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
           <TouchableOpacity onPress={handleCopyCurl} style={styles.actionBtn}>
             <Text style={styles.actionBtnText}>📋 Copy cURL</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleCopyResponse} style={styles.actionBtn}>
-            <Text style={styles.actionBtnText}>📄 Copy Response</Text>
-          </TouchableOpacity>
+          {request.requestBody && (
+            <TouchableOpacity onPress={handleCopyRequestBody} style={styles.actionBtn}>
+              <Text style={styles.actionBtnText}>📤 Copy Request</Text>
+            </TouchableOpacity>
+          )}
+          {request.responseBody && (
+            <TouchableOpacity onPress={handleCopyResponseBody} style={styles.actionBtn}>
+              <Text style={styles.actionBtnText}>📥 Copy Response</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -102,7 +142,7 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
           style={[styles.tabItem, activeTab === 'request' && styles.tabItemActive]}
         >
           <Text style={[styles.tabText, activeTab === 'request' && styles.tabTextActive]}>
-            Request
+            Request {request.requestBody ? '•' : ''}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -110,19 +150,24 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
           style={[styles.tabItem, activeTab === 'response' && styles.tabItemActive]}
         >
           <Text style={[styles.tabText, activeTab === 'response' && styles.tabTextActive]}>
-            Response
+            Response {request.responseBody ? '•' : ''}
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
+        {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <View style={styles.section}>
+            <InfoRow label="Method" value={request.method} />
             <InfoRow label="Status" value={request.status ? `${request.status} ${request.statusText || ''}` : 'Failed / Pending'} />
+            <InfoRow label="Path" value={pathname} />
             <InfoRow label="Time" value={formatTime(request.startTime)} />
             <InfoRow label="Duration" value={formatDuration(request.duration)} />
-            <InfoRow label="Size" value={formatBytes(request.size)} />
-            <InfoRow label="Method" value={request.method} />
+            <InfoRow label="Payload Size" value={formatBytes(request.size)} />
+            <InfoRow label="Query Params" value={String(queryParamCount)} />
+            <InfoRow label="Request Headers" value={String(requestHeaderCount)} />
+            <InfoRow label="Response Headers" value={String(responseHeaderCount)} />
             {request.error && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorTitle}>Error:</Text>
@@ -132,10 +177,25 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
           </View>
         )}
 
+        {/* TAB 2: REQUEST (Headers, Query Params, Body) */}
         {activeTab === 'request' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Request Headers</Text>
-            {request.requestHeaders && Object.keys(request.requestHeaders).length > 0 ? (
+            {/* Query parameters */}
+            {queryParamCount > 0 && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={styles.sectionTitle}>Query Parameters ({queryParamCount})</Text>
+                {Object.entries(queryParams).map(([k, v]) => (
+                  <View key={k} style={styles.headerItem}>
+                    <Text style={styles.headerKey}>{k}</Text>
+                    <Text style={styles.headerVal}>{v}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Request Headers */}
+            <Text style={styles.sectionTitle}>Request Headers ({requestHeaderCount})</Text>
+            {request.requestHeaders && requestHeaderCount > 0 ? (
               Object.entries(request.requestHeaders).map(([k, v]) => (
                 <View key={k} style={styles.headerItem}>
                   <Text style={styles.headerKey}>{k}:</Text>
@@ -143,24 +203,36 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>No request headers</Text>
+              <Text style={styles.emptyText}>No custom request headers sent</Text>
             )}
 
-            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Request Body</Text>
+            {/* Request Body */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Request Body</Text>
+              {request.requestBody && (
+                <TouchableOpacity onPress={handleCopyRequestBody} style={styles.miniBtn}>
+                  <Text style={styles.miniBtnText}>Copy Body</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             {request.requestBody ? (
               <View style={styles.bodyBox}>
-                <JsonViewer data={request.requestBody} />
+                <JsonViewer data={request.requestBody} initialExpandedDepth={3} />
               </View>
             ) : (
-              <Text style={styles.emptyText}>No request body</Text>
+              <Text style={styles.emptyText}>
+                No request body sent ({request.method} requests typically have no body)
+              </Text>
             )}
           </View>
         )}
 
+        {/* TAB 3: RESPONSE (Headers, Body) */}
         {activeTab === 'response' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Response Headers</Text>
-            {request.responseHeaders && Object.keys(request.responseHeaders).length > 0 ? (
+            <Text style={styles.sectionTitle}>Response Headers ({responseHeaderCount})</Text>
+            {request.responseHeaders && responseHeaderCount > 0 ? (
               Object.entries(request.responseHeaders).map(([k, v]) => (
                 <View key={k} style={styles.headerItem}>
                   <Text style={styles.headerKey}>{k}:</Text>
@@ -171,14 +243,22 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
               <Text style={styles.emptyText}>No response headers</Text>
             )}
 
-            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Response Body</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Response Body</Text>
+              {request.responseBody && (
+                <TouchableOpacity onPress={handleCopyResponseBody} style={styles.miniBtn}>
+                  <Text style={styles.miniBtnText}>Copy Body</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             {request.responseBody ? (
               <View style={styles.bodyBox}>
-                <JsonViewer data={request.responseBody} />
+                <JsonViewer data={request.responseBody} initialExpandedDepth={2} />
               </View>
             ) : (
               <Text style={styles.emptyText}>
-                {request.error ? `Error: ${request.error}` : 'No response body'}
+                {request.error ? `Error: ${request.error}` : 'No response body returned'}
               </Text>
             )}
           </View>
@@ -264,7 +344,8 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 10,
+    flexWrap: 'wrap',
+    gap: 8,
     borderTopWidth: 1,
     borderTopColor: '#334155',
     paddingTop: 10,
@@ -311,11 +392,29 @@ const styles = StyleSheet.create({
   section: {
     paddingBottom: 40,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
   sectionTitle: {
     color: '#cbd5e1',
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 8,
+  },
+  miniBtn: {
+    backgroundColor: '#334155',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  miniBtnText: {
+    color: '#38bdf8',
+    fontSize: 11,
+    fontWeight: '600',
   },
   infoRow: {
     flexDirection: 'row',
@@ -332,6 +431,8 @@ const styles = StyleSheet.create({
     color: '#f8fafc',
     fontSize: 13,
     fontFamily: 'Courier',
+    maxWidth: '65%',
+    textAlign: 'right',
   },
   errorContainer: {
     backgroundColor: '#451a1a',
@@ -353,7 +454,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier',
   },
   headerItem: {
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#1e293b',
   },
