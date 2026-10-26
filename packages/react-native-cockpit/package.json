@@ -1,0 +1,50 @@
+{
+  "name": "react-native-cockpit",
+  "version": "0.1.0",
+  "description": "In-app developer heads-up debugger for React Native: inspect Network, Logs, Storage & App State directly on device",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src",
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "react-native",
+    "flipper-alternative",
+    "debugger",
+    "network-inspector",
+    "chucker",
+    "pulse",
+    "in-app-debugger",
+    "logger",
+    "async-storage-viewer",
+    "mmkv-viewer",
+    "expo"
+  ],
+  "author": "Devendra",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "@react-native-async-storage/async-storage": {
+      "optional": true
+    },
+    "react-native-mmkv": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.4.0"
+  }
+}
