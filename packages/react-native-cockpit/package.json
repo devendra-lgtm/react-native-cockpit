@@ -1,6 +1,6 @@
 {
   "name": "react-native-cockpit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "In-app developer heads-up debugger for React Native: inspect Network, Logs, Storage & App State directly on device",
   "main": "src/index.ts",
   "react-native": "src/index.ts",
