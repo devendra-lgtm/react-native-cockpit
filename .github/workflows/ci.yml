@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Typecheck & Build Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies & Typecheck Library
+        run: |
+          cd packages/react-native-cockpit
+          npm install
+          npm run build
+
+      - name: Validate npm package bundle
+        run: |
+          cd packages/react-native-cockpit
+          npm pack --dry-run

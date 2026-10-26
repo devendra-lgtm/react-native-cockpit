@@ -9,6 +9,7 @@
   "source": "src/index.ts",
   "files": [
     "src",
+    "dist",
     "README.md"
   ],
   "scripts": {

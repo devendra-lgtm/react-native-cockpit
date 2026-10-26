@@ -1,0 +1,59 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [created, published]
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (validate build and pack without publishing)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Build & Publish react-native-cockpit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies & Build
+        run: |
+          cd packages/react-native-cockpit
+          npm install
+          npm run build
+
+      - name: Validate package contents
+        run: |
+          cd packages/react-native-cockpit
+          npm pack --dry-run
+
+      - name: Publish to npm (Dry Run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "Dry run enabled. Skipping actual publish."
+          cd packages/react-native-cockpit
+          npm publish --dry-run
+
+      - name: Publish to npm
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          cd packages/react-native-cockpit
+          npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
