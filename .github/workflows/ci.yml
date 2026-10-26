@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies & Typecheck Library
         run: |
           cd packages/react-native-cockpit
-          npm install
+          npm install --legacy-peer-deps
           npm run build
 
       - name: Validate npm package bundle

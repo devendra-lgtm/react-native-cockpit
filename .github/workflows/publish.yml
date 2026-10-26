@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies & Build
         run: |
           cd packages/react-native-cockpit
-          npm install
+          npm install --legacy-peer-deps
           npm run build
 
       - name: Validate package contents
