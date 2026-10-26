@@ -27,8 +27,16 @@
     "mmkv-viewer",
     "expo"
   ],
-  "author": "Devendra",
+  "author": "devendra-lgtm",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devendra-lgtm/react-native-cockpit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/devendra-lgtm/react-native-cockpit/issues"
+  },
+  "homepage": "https://github.com/devendra-lgtm/react-native-cockpit#readme",
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
