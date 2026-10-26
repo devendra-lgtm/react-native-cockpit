@@ -21,6 +21,18 @@
 
 ---
 
+## 📸 Screenshots
+
+| Network Monitor | Console Stream | Storage Inspector | Device Specs |
+|:---:|:---:|:---:|:---:|
+| <img src="./screenshots/cockpit-network-list.png" width="200" /> | <img src="./screenshots/cockpit-logs-stream.png" width="200" /> | <img src="./screenshots/cockpit-storage-inspector.png" width="200" /> | <img src="./screenshots/cockpit-device-info.png" width="200" /> |
+
+| Request Overview | Copy cURL | Response Preview |
+|:---:|:---:|:---:|
+| <img src="./screenshots/cockpit-request-details.png" width="200" /> | <img src="./screenshots/cockpit-curl-export.png" width="200" /> | <img src="./screenshots/cockpit-response-preview.png" width="200" /> |
+
+---
+
 ## 📦 Installation
 
 ```bash
