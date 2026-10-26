@@ -39,7 +39,7 @@ export function safeJsonStringify(data: any, space = 2): string {
   try {
     return JSON.stringify(
       data,
-      (_key, val) => {
+      (_key: string, val: any) => {
         if (typeof val === 'object' && val !== null) {
           if (seen.has(val)) return '[Circular]';
           seen.add(val);

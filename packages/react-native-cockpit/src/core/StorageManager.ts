@@ -80,9 +80,9 @@ export class StorageManager {
     return {
       name,
       getAllKeys: () => asyncStorage.getAllKeys(),
-      getItem: (key) => asyncStorage.getItem(key),
-      setItem: (key, val) => asyncStorage.setItem(key, val),
-      removeItem: (key) => asyncStorage.removeItem(key),
+      getItem: (key: string) => asyncStorage.getItem(key),
+      setItem: (key: string, val: string) => asyncStorage.setItem(key, val),
+      removeItem: (key: string) => asyncStorage.removeItem(key),
       clear: () => asyncStorage.clear(),
     };
   }
@@ -94,9 +94,9 @@ export class StorageManager {
     return {
       name,
       getAllKeys: () => mmkv.getAllKeys(),
-      getItem: (key) => mmkv.getString(key) ?? null,
-      setItem: (key, val) => mmkv.set(key, val),
-      removeItem: (key) => mmkv.delete(key),
+      getItem: (key: string) => mmkv.getString(key) ?? null,
+      setItem: (key: string, val: string) => mmkv.set(key, val),
+      removeItem: (key: string) => mmkv.delete(key),
       clear: () => mmkv.clearAll(),
     };
   }

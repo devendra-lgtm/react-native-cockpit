@@ -65,11 +65,11 @@ export class NetworkInterceptor {
       const requestHeaders: Record<string, string> = {};
       if (init?.headers) {
         if (typeof Headers !== 'undefined' && init.headers instanceof Headers) {
-          init.headers.forEach((val, key) => {
+          init.headers.forEach((val: string, key: string) => {
             requestHeaders[key] = val;
           });
         } else if (Array.isArray(init.headers)) {
-          init.headers.forEach(([key, val]) => {
+          init.headers.forEach(([key, val]: [string, string]) => {
             requestHeaders[key] = val;
           });
         } else if (typeof init.headers === 'object') {
@@ -111,7 +111,7 @@ export class NetworkInterceptor {
         // Extract response headers
         const responseHeaders: Record<string, string> = {};
         if (response.headers) {
-          response.headers.forEach((val, key) => {
+          response.headers.forEach((val: string, key: string) => {
             responseHeaders[key] = val;
           });
         }
@@ -185,7 +185,7 @@ export class NetworkInterceptor {
       ) {
         method = m.toUpperCase();
         url = typeof u === 'string' ? u : u.toString();
-        return origOpen.call(xhr, m, u, async, user, password);
+        return origOpen.call(xhr, m, url, async, user, password);
       };
 
       const origSetRequestHeader = xhr.setRequestHeader;
@@ -227,7 +227,7 @@ export class NetworkInterceptor {
           rawHeaders
             .trim()
             .split(/[\r\n]+/)
-            .forEach((line) => {
+            .forEach((line: string) => {
               const parts = line.split(': ');
               const header = parts.shift();
               const val = parts.join(': ');

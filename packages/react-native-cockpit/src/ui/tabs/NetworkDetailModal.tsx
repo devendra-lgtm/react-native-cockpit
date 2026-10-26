@@ -35,7 +35,7 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
   try {
     const urlObj = new URL(request.url);
     pathname = urlObj.pathname;
-    urlObj.searchParams.forEach((val, key) => {
+    urlObj.searchParams.forEach((val: string, key: string) => {
       queryParams[key] = val;
     });
   } catch {
@@ -44,7 +44,7 @@ export const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({
     if (qIndex !== -1) {
       pathname = request.url.slice(0, qIndex);
       const search = request.url.slice(qIndex + 1);
-      search.split('&').forEach((pair) => {
+      search.split('&').forEach((pair: string) => {
         const [k, v] = pair.split('=');
         if (k) queryParams[decodeURIComponent(k)] = decodeURIComponent(v || '');
       });
